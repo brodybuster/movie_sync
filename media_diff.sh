@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compare Radarr, Plex, and local movie directories by IMDb ID (optimized)
+# Compare Radarr, Plex, and local movie directories by IMDb ID
 
 RADARR_URL="http://<IP>:7878"
 RADARR_API_KEY="<api_key>"
@@ -10,11 +10,10 @@ SECTION_KEY="<movie_section_id_plex>"
 
 MOVIE_DIR="<local_dir_where_movies_are>"
 
-# --- Check dependencies ---
 command -v jq >/dev/null 2>&1 || { echo "jq is required but not installed."; exit 1; }
 command -v xmllint >/dev/null 2>&1 || { echo "xmllint is required but not installed."; exit 1; }
 
-# --- Step 1: Fetch Radarr movie list ---
+# Fetch Radarr movie list
 echo "Fetching IMDb IDs from Radarr..."
 radarr_json=$(curl -s "${RADARR_URL}/api/v3/movie" -H "X-Api-Key: ${RADARR_API_KEY}")
 declare -A radarr_lookup
@@ -24,7 +23,7 @@ while IFS=$'\t' read -r imdb_id title; do
     radarr_titles["$imdb_id"]="$title"
 done < <(echo "$radarr_json" | jq -r '.[] | select(.imdbId != null) | "\(.imdbId)\t\(.title)"')
 
-# --- Step 2: Fetch Plex movie list ---
+# Fetch Plex movie list
 echo "Fetching IMDb IDs from Plex..."
 declare -A plex_lookup
 while IFS= read -r line; do
@@ -38,7 +37,7 @@ done < <(
       done
 )
 
-# --- Step 3: Scan local disk ---
+# Scan local disk
 echo "Scanning local disk for IMDb IDs..."
 declare -A disk_lookup
 declare -A disk_paths
@@ -50,7 +49,7 @@ while IFS= read -r d; do
     fi
 done < <(find "$MOVIE_DIR" -mindepth 1 -maxdepth 1 -type d)
 
-# --- Step 4: Compare disk vs Radarr ---
+# Compare disk vs Radarr
 echo
 echo "Disk vs Radarr:"
 missing_radarr=()
@@ -68,7 +67,7 @@ else
     done
 fi
 
-# --- Step 5: Compare disk vs Plex ---
+# Compare disk vs Plex
 echo
 echo "Disk vs Plex:"
 missing_plex=()
